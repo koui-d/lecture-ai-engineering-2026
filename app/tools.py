@@ -4,12 +4,14 @@
 説明文を書き換えると、モデルがツールを使うかどうか・どんな引数で呼ぶかが変わる。
 """
 
+from datetime import datetime
 import json
 import random
 from functools import cache
 from pathlib import Path
 
 DATA_DIR = Path(__file__).resolve().parent.parent / "data"
+LEARNING_LOG_DIR = Path(__file__).resolve().parent / "learning_log"
 MAX_RESULTS = 3
 
 
@@ -97,4 +99,21 @@ def make_quiz(lecture: int) -> str:
         },
         ensure_ascii=False,
     )
+def save_learning_log(topic: str, note: str, lecture: int = 0) -> str:
+    """学習の記録（トピック、メモ、関係する回）をファイルに保存する。
 
+    「学習記録を保存して」「今日学んだことをメモして」のように記録の保存を求められたときに使う。
+    """
+    LEARNING_LOG_DIR.mkdir(parents=True, exist_ok=True)
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    safe_topic = "".join(c for c in topic if c.isalnum() or c in ("_", "-")).strip() or "log"
+    file_path = LEARNING_LOG_DIR / f"{timestamp}_{safe_topic}.md"
+
+    header = f"# {topic} (第{lecture}回)\n" if lecture > 0 else f"# {topic}\n"
+    content = (
+        f"{header}"
+        f"- 日時: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n\n"
+        f"{note}\n"
+    )
+    file_path.write_text(content, encoding="utf-8")
+    return f"学習記録を保存しました: {file_path.name}"
